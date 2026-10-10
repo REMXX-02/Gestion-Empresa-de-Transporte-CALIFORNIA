@@ -1,0 +1,21 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Eliminar {{ section }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ list_url }}" class="small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Volver a {{ section|lower }}</a>
+</div>
+<div class="card mx-auto" style="max-width:620px">
+    <div class="card-body p-4 p-md-5 text-center">
+        <span class="metric-icon mx-auto mb-3" style="background:#fff0ee;color:#bd4439"><i class="bi bi-trash3"></i></span>
+        <h1 class="h4 fw-bold">¿Eliminar este registro?</h1>
+        <p class="muted mb-4">Se eliminará <strong class="text-dark">{{ record }}</strong>. Esta acción no se puede deshacer.</p>
+        <form method="post">
+            {% csrf_token %}
+            <a href="{{ list_url }}" class="btn btn-light border me-2">Cancelar</a>
+            <button type="submit" class="btn btn-danger"><i class="bi bi-trash3 me-1"></i>Eliminar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

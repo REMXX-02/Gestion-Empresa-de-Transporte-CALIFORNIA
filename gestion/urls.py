@@ -1,0 +1,52 @@
+from django.urls import path
+
+from . import views
+
+urlpatterns = [
+    path("", views.dashboard_view, name="dashboard"),
+    path("flota/", views.fleet_list, name="fleet_list"),
+    path("flota/nueva/", views.fleet_create, name="fleet_create"),
+    path("flota/<int:pk>/editar/", views.fleet_edit, name="fleet_edit"),
+    path("flota/<int:pk>/eliminar/", views.fleet_delete, name="fleet_delete"),
+    path("conductores/", views.drivers_list, name="drivers_list"),
+    path("conductores/nuevo/", views.drivers_create, name="drivers_create"),
+    path("conductores/<int:pk>/editar/", views.drivers_edit, name="drivers_edit"),
+    path("conductores/<int:pk>/eliminar/", views.drivers_delete, name="drivers_delete"),
+    path("rutas/", views.routes_list, name="routes_list"),
+    path("rutas/nueva/", views.route_create, name="routes_create"),
+    path("rutas/<int:pk>/editar/", views.route_edit, name="routes_edit"),
+    path("rutas/<int:pk>/eliminar/", views.route_delete, name="routes_delete"),
+    path("paraderos/", views.stops_list, name="stops_list"),
+    path("paraderos/nuevo/", views.stops_create, name="stops_create"),
+    path("paraderos/<int:pk>/editar/", views.stops_edit, name="stops_edit"),
+    path("paraderos/<int:pk>/eliminar/", views.stops_delete, name="stops_delete"),
+    path("turnos/", views.shifts_list, name="shifts_list"),
+    path("turnos/nuevo/", views.shifts_create, name="shifts_create"),
+    path("turnos/<int:pk>/editar/", views.shifts_edit, name="shifts_edit"),
+    path("turnos/<int:pk>/eliminar/", views.shifts_delete, name="shifts_delete"),
+    path("turnos/<int:pk>/<str:action>/", views.shift_action, name="shift_action"),
+    path("despacho/", views.dispatch_list, name="dispatch_list"),
+    path("despacho/nuevo/", views.dispatch_create, name="dispatch_create"),
+    path("despacho/<int:pk>/editar/", views.dispatch_edit, name="dispatch_edit"),
+    path("despacho/<int:pk>/eliminar/", views.dispatch_delete, name="dispatch_delete"),
+    path(
+        "despacho/<int:dispatch_pk>/control/",
+        views.passage_create,
+        name="passage_create",
+    ),
+    path(
+        "despacho/<int:pk>/<str:action>/",
+        views.dispatch_action,
+        name="dispatch_action",
+    ),
+    path("incidencias/", views.incidents_list, name="incidents_list"),
+    path("incidencias/nueva/", views.incidents_create, name="incidents_create"),
+    path("incidencias/<int:pk>/editar/", views.incidents_edit, name="incidents_edit"),
+    path(
+        "incidencias/<int:pk>/eliminar/",
+        views.incidents_delete,
+        name="incidents_delete",
+    ),
+    path("reportes/", views.reports_view, name="reports"),
+    path("reportes/despachos.csv", views.export_report, name="export_report"),
+]

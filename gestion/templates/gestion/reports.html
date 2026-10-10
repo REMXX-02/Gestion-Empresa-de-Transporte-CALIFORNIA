@@ -1,0 +1,97 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Reportes{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <h1 class="page-title">Reportes</h1>
+        <p class="page-subtitle">Indicadores del mes de {{ report_date|date:"F Y" }} y exportación de despachos.</p>
+    </div>
+    <a class="btn btn-success" href="{% url 'export_report' %}"><i class="bi bi-download me-1"></i>Exportar despachos CSV</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card metric-card p-3 h-100">
+            <span class="metric-icon"><i class="bi bi-arrow-repeat"></i></span>
+            <div class="metric-value">{{ dispatches_month }}</div>
+            <div class="metric-label">Vueltas registradas este mes</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card metric-card p-3 h-100">
+            <span class="metric-icon"><i class="bi bi-check2-circle"></i></span>
+            <div class="metric-value">{{ completed_month }}</div>
+            <div class="metric-label">Vueltas completadas</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card metric-card p-3 h-100">
+            <span class="metric-icon"><i class="bi bi-person-check"></i></span>
+            <div class="metric-value">{{ drivers_available }}</div>
+            <div class="metric-label">Conductores habilitados</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card metric-card p-3 h-100">
+            <span class="metric-icon"><i class="bi bi-exclamation-triangle"></i></span>
+            <div class="metric-value">{{ incidents_open }}</div>
+            <div class="metric-label">Incidencias pendientes</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <section class="card h-100">
+            <div class="card-header px-4 py-3">
+                <h2 class="h6 fw-bold mb-0">Actividad por ruta</h2>
+                <small class="muted">Turnos programados durante el mes</small>
+            </div>
+            {% if route_usage %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Ruta</th><th>Origen y destino</th><th class="text-end">Turnos</th></tr></thead>
+                    <tbody>
+                        {% for route in route_usage %}
+                        <tr>
+                            <td><span class="badge text-bg-light border">{{ route.code }}</span> {{ route.name }}</td>
+                            <td>{{ route.origin|default:"—" }} → {{ route.destination|default:"—" }}</td>
+                            <td class="text-end fw-semibold">{{ route.shift_count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">No hay rutas registradas.</div>
+            {% endif %}
+        </section>
+    </div>
+    <div class="col-lg-5">
+        <section class="card h-100">
+            <div class="card-header px-4 py-3">
+                <h2 class="h6 fw-bold mb-0">Estado de la flota</h2>
+                <small class="muted">Unidades agrupadas por estado</small>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for item in vehicle_status %}
+                <div class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                    <span>{% if item.status == "active" %}Activa{% elif item.status == "maintenance" %}En mantenimiento{% else %}Inactiva{% endif %}</span>
+                    <span class="badge rounded-pill text-bg-light border text-dark">{{ item.total }}</span>
+                </div>
+                {% empty %}
+                <div class="empty-state">No hay unidades registradas.</div>
+                {% endfor %}
+            </div>
+            <div class="card-body border-top">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small muted">Licencias vencidas o por vencer</span>
+                    <span class="badge {% if drivers_expiring %}text-bg-warning{% else %}text-bg-success{% endif %}">{{ drivers_expiring }}</span>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

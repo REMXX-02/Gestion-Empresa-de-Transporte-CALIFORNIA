@@ -1,0 +1,93 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Rutas y paraderos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>#route-map { height: 390px; border-radius: 0 0 13px 13px; z-index: 1; }</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <h1 class="page-title">Rutas</h1>
+        <p class="page-subtitle">Administra las líneas y consulta sus paraderos georreferenciados.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-success" href="{% url 'stops_create' %}"><i class="bi bi-geo-alt me-1"></i>Nuevo paradero</a>
+        <a class="btn btn-success" href="{% url 'routes_create' %}"><i class="bi bi-plus-lg me-1"></i>Nueva ruta</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <section class="card h-100">
+            <div class="card-header px-4 py-3"><h2 class="h6 fw-bold mb-0">Líneas registradas <span class="badge text-bg-light border ms-1">{{ routes|length }}</span></h2></div>
+            {% if routes %}
+            <div class="list-group list-group-flush">
+                {% for route in routes %}
+                <div class="list-group-item px-4 py-3 {% if selected_route.pk == route.pk %}border-start border-3 border-success{% endif %}">
+                    <a href="?route={{ route.pk }}" class="d-block text-decoration-none">
+                    <div class="d-flex justify-content-between gap-2">
+                        <div>
+                            <div class="fw-bold text-dark">{{ route.code }} <span class="fw-normal">· {{ route.name }}</span></div>
+                            <small class="muted">{{ route.origin|default:"Origen sin definir" }} → {{ route.destination|default:"Destino sin definir" }}</small>
+                        </div>
+                        <span class="badge {% if route.active %}text-bg-success{% else %}text-bg-secondary{% endif %} align-self-start">{% if route.active %}Activa{% else %}Inactiva{% endif %}</span>
+                    </div>
+                    <small class="d-block muted mt-2">{{ route.stops.count }} paradero{{ route.stops.count|pluralize:"s" }}{% if route.distance_km %} · {{ route.distance_km }} km{% endif %}</small>
+                    </a>
+                    <div class="mt-2 d-flex gap-2">
+                        <a class="small text-decoration-none" href="{% url 'routes_edit' route.pk %}"><i class="bi bi-pencil me-1"></i>Editar</a>
+                        <a class="small text-danger text-decoration-none" href="{% url 'routes_delete' route.pk %}"><i class="bi bi-trash3 me-1"></i>Eliminar</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state"><i class="bi bi-signpost-2 fs-3 d-block mb-2"></i>Aún no hay rutas.<br><a href="{% url 'routes_create' %}">Registra la ruta A o C</a></div>
+            {% endif %}
+        </section>
+    </div>
+    <div class="col-lg-8">
+        <section class="card overflow-hidden">
+            <div class="card-header bg-white px-4 py-3">
+                <h2 class="h6 fw-bold mb-0">{% if selected_route %}{{ selected_route.code }} · {{ selected_route.name }}{% else %}Mapa de rutas{% endif %}</h2>
+                <small class="muted">{% if selected_route %}{{ selected_route.origin|default:"" }}{% if selected_route.origin and selected_route.destination %} → {% endif %}{{ selected_route.destination|default:"" }}{% else %}Agrega una ruta para visualizar su recorrido{% endif %}</small>
+            </div>
+            <div id="route-map" role="img" aria-label="Mapa de la ruta y sus paraderos"></div>
+            {% if selected_route and not map_stops %}
+            <div class="px-4 py-3 small muted"><i class="bi bi-info-circle me-1"></i>Esta ruta aún no tiene paraderos con coordenadas. Agrégalos desde <a href="{% url 'stops_create' %}">Nuevo paradero</a> para dibujar el recorrido.</div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{{ map_stops|json_script:"route-stops-data" }}
+{% if selected_route %}{{ selected_route.color|json_script:"route-color-data" }}{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const map = L.map("route-map").setView([-8.1116, -79.0286], 12);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    const stops = JSON.parse(document.getElementById("route-stops-data").textContent);
+    if (stops.length) {
+        const points = stops.map(stop => [stop.latitude, stop.longitude]);
+        const routeColorElement = document.getElementById("route-color-data");
+        const routeColor = routeColorElement ? JSON.parse(routeColorElement.textContent) : "#147a55";
+        L.polyline(points, { color: routeColor, weight: 4, opacity: 0.8 }).addTo(map);
+        stops.forEach(stop => {
+            const popup = document.createElement("span");
+            popup.textContent = `${stop.sequence}. ${stop.name}`;
+            L.marker([stop.latitude, stop.longitude])
+                .addTo(map)
+                .bindPopup(popup);
+        });
+        map.fitBounds(points, { padding: [28, 28], maxZoom: 15 });
+    }
+</script>
+{% endblock %}

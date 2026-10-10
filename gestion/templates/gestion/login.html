@@ -1,0 +1,36 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Iniciar sesión{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4 py-md-5">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+        <div class="text-center mb-4">
+            <span class="brand-mark mx-auto mb-3"><i class="bi bi-signpost-split"></i></span>
+            <h1 class="h3 fw-bold">Bienvenido</h1>
+            <p class="muted">Ingresa al panel de operaciones de Nuevo California.</p>
+        </div>
+        <section class="card">
+            <div class="card-body p-4 p-lg-5">
+                {% if form.errors %}
+                <div class="alert alert-danger" role="alert">Usuario o contraseña incorrectos. Verifica tus datos e inténtalo nuevamente.</div>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.username.id_for_label }}">Usuario</label>
+                        <input class="form-control" type="text" name="{{ form.username.html_name }}" id="{{ form.username.id_for_label }}" value="{{ form.username.value|default:'' }}" autocomplete="username" autofocus required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label" for="{{ form.password.id_for_label }}">Contraseña</label>
+                        <input class="form-control" type="password" name="{{ form.password.html_name }}" id="{{ form.password.id_for_label }}" autocomplete="current-password" required>
+                    </div>
+                    <button class="btn btn-success w-100 py-2" type="submit"><i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesión</button>
+                </form>
+            </div>
+        </section>
+        <p class="text-center small muted mt-3">Acceso exclusivo para el personal autorizado.</p>
+    </div>
+</div>
+{% endblock %}

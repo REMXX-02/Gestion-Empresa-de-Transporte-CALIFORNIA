@@ -1,0 +1,91 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}{{ section }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <h1 class="page-title">{{ section }}</h1>
+        <p class="page-subtitle">Administra y consulta los registros de {{ section|lower }}.</p>
+    </div>
+    <a class="btn btn-success" href="{{ create_url }}"><i class="bi bi-plus-lg me-1"></i>Nuevo registro</a>
+</div>
+
+<section class="card">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3 px-3 px-lg-4 py-3">
+        <div>
+            <h2 class="h6 fw-bold mb-0">Listado de {{ section|lower }}</h2>
+            <small class="muted">{{ page_obj.paginator.count }} registro{{ page_obj.paginator.count|pluralize:"s" }}</small>
+        </div>
+        <form method="get" action="{{ list_url }}" class="d-flex gap-2">
+            <label class="visually-hidden" for="record-search">Buscar {{ section|lower }}</label>
+            <input id="record-search" class="form-control" type="search" name="q" value="{{ search_term }}" placeholder="Buscar..." style="width:min(260px, 55vw)">
+            <button class="btn btn-outline-success" type="submit" aria-label="Buscar"><i class="bi bi-search"></i></button>
+        </form>
+    </div>
+    {% if rows %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead><tr>{% for column in columns %}<th>{{ column }}</th>{% endfor %}<th class="text-end">Acciones</th></tr></thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    {% for cell in row.cells %}
+                    <td class="{% if forloop.last and row.status %}text-nowrap{% endif %}">
+                        {% if forloop.last and row.status %}
+                            <span class="badge text-bg-{{ row.status_class }}{% if row.status_class == 'warning' or row.status_class == 'info' %} text-dark{% endif %}">{{ cell }}</span>
+                        {% else %}
+                            <span class="text-truncate d-inline-block" style="max-width:260px" title="{{ cell }}">{{ cell }}</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td class="text-end text-nowrap">
+                        {% if row.shift %}
+                            {% if row.can_close_shift %}
+                            <form method="post" action="{% url 'shift_action' row.shift.pk 'close' %}" class="d-inline">
+                                {% csrf_token %}<button class="btn btn-sm btn-success" type="submit" title="Cerrar turno"><i class="bi bi-check2-circle"></i> Cerrar turno</button>
+                            </form>
+                            {% elif row.can_cancel_shift %}
+                            <form method="post" action="{% url 'shift_action' row.shift.pk 'cancel' %}" class="d-inline">
+                                {% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit" title="Cancelar turno"><i class="bi bi-x-circle"></i></button>
+                            </form>
+                            {% endif %}
+                        {% endif %}
+                        {% if row.dispatch %}
+                            {% if row.dispatch.status == 'scheduled' %}
+                            <form method="post" action="{% url 'dispatch_action' row.dispatch.pk 'depart' %}" class="d-inline">
+                                {% csrf_token %}<button class="btn btn-sm btn-outline-success" type="submit" title="Registrar salida"><i class="bi bi-play-fill"></i> Salida</button>
+                            </form>
+                            {% elif row.dispatch.status == 'in_progress' %}
+                            <a class="btn btn-sm btn-outline-success" href="{{ row.passage_url }}" title="Registrar paso por paradero"><i class="bi bi-geo-alt"></i></a>
+                            <form method="post" action="{% url 'dispatch_action' row.dispatch.pk 'arrive' %}" class="d-inline">
+                                {% csrf_token %}<button class="btn btn-sm btn-success" type="submit" title="Registrar llegada"><i class="bi bi-check2"></i> Llegada</button>
+                            </form>
+                            {% endif %}
+                        {% endif %}
+                        <a class="btn btn-sm btn-light border" href="{{ row.edit_url }}" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a class="btn btn-sm btn-light border text-danger" href="{{ row.delete_url }}" title="Eliminar"><i class="bi bi-trash3"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+        {% if search_term %}No se encontraron registros para «{{ search_term }}».{% else %}Aún no hay registros en este módulo.{% endif %}
+        <div class="mt-3"><a class="btn btn-sm btn-outline-success" href="{{ create_url }}">Crear el primer registro</a></div>
+    </div>
+    {% endif %}
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center px-4 py-3">
+        <span class="small muted">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        <div class="d-flex gap-2">
+            {% if page_obj.has_previous %}<a class="btn btn-sm btn-light border" href="?q={{ search_term|urlencode }}&page={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}
+            {% if page_obj.has_next %}<a class="btn btn-sm btn-light border" href="?q={{ search_term|urlencode }}&page={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

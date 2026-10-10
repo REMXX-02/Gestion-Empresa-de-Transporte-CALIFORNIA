@@ -1,0 +1,138 @@
+{% extends 'gestion/base.html' %}
+
+{% block title %}Resumen{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <h1 class="page-title">Resumen operativo</h1>
+        <p class="page-subtitle">Estado de la operación · {{ today|date:"l, j F Y" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-success" href="{% url 'shifts_create' %}"><i class="bi bi-calendar-plus me-1"></i>Programar turno</a>
+        <a class="btn btn-success" href="{% url 'dispatch_create' %}"><i class="bi bi-plus-lg me-1"></i>Nuevo despacho</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl">
+        <div class="card metric-card p-3 h-100">
+            <span class="metric-icon"><i class="bi bi-truck-front"></i></span>
+            <div class="metric-value">{{ vehicle_count }}</div>
+            <div class="metric-label">Unidades activas</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl">
+        <div class="card metric-card p-3 h-100">
+            <span class="metric-icon"><i class="bi bi-person-check"></i></span>
+            <div class="metric-value">{{ driver_count }}</div>
+            <div class="metric-label">Conductores habilitados</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl">
+        <div class="card metric-card p-3 h-100">
+            <span class="metric-icon"><i class="bi bi-calendar2-check"></i></span>
+            <div class="metric-value">{{ today_shifts }}</div>
+            <div class="metric-label">Turnos de hoy</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl">
+        <div class="card metric-card p-3 h-100">
+            <span class="metric-icon"><i class="bi bi-arrow-repeat"></i></span>
+            <div class="metric-value">{{ today_dispatches }}</div>
+            <div class="metric-label">Vueltas despachadas</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl">
+        <div class="card metric-card p-3 h-100">
+            <span class="metric-icon"><i class="bi bi-exclamation-circle"></i></span>
+            <div class="metric-value">{{ open_incidents }}</div>
+            <div class="metric-label">Incidencias pendientes</div>
+        </div>
+    </div>
+</div>
+
+{% if document_alerts or license_alerts or maintenance_alerts %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-shield-exclamation text-warning fs-5"></i>
+            <h2 class="h6 fw-bold mb-0">Alertas operativas</h2>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            {% for vehicle in document_alerts %}
+                <a class="badge rounded-pill text-bg-warning text-decoration-none p-2" href="{% url 'fleet_list' %}">{{ vehicle.unit_code }} · documento vencido o por vencer</a>
+            {% endfor %}
+            {% for driver in license_alerts %}
+                <a class="badge rounded-pill text-bg-danger text-decoration-none p-2" href="{% url 'drivers_list' %}">{{ driver.full_name }} · brevete vencido o por vencer</a>
+            {% endfor %}
+            {% for vehicle in maintenance_alerts %}
+                <a class="badge rounded-pill text-bg-info text-dark text-decoration-none p-2" href="{% url 'fleet_list' %}">{{ vehicle.unit_code }} · mantenimiento {{ vehicle.maintenance_due|date:"d/m/Y" }}</a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-3">
+    <div class="col-xl-7">
+        <section class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
+                <div>
+                    <h2 class="h6 fw-bold mb-0">Turnos próximos</h2>
+                    <small class="muted">Asignaciones programadas para hoy en adelante</small>
+                </div>
+                <a href="{% url 'shifts_list' %}" class="small text-decoration-none">Ver turnos <i class="bi bi-arrow-right"></i></a>
+            </div>
+            {% if recent_shifts %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Hora</th><th>Ruta</th><th>Conductor</th><th>Unidad</th><th>Estado</th></tr></thead>
+                    <tbody>
+                        {% for shift in recent_shifts %}
+                        <tr>
+                            <td><span class="fw-semibold">{{ shift.planned_departure|time:"H:i" }}</span><small class="d-block muted">{{ shift.service_date|date:"d/m" }}</small></td>
+                            <td>{{ shift.route.code }}</td>
+                            <td>{{ shift.driver.full_name }}</td>
+                            <td>{{ shift.vehicle.plate }}</td>
+                            <td><span class="badge text-bg-light border">{{ shift.get_status_display }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state"><i class="bi bi-calendar-x fs-3 d-block mb-2"></i>No hay turnos próximos.<br><a href="{% url 'shifts_create' %}">Programa el primero</a></div>
+            {% endif %}
+        </section>
+    </div>
+    <div class="col-xl-5">
+        <section class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center py-3 px-4">
+                <div>
+                    <h2 class="h6 fw-bold mb-0">Unidades en ruta</h2>
+                    <small class="muted">Vueltas con salida registrada</small>
+                </div>
+                <a href="{% url 'dispatch_list' %}" class="small text-decoration-none">Despacho <i class="bi bi-arrow-right"></i></a>
+            </div>
+            {% if active_dispatches %}
+                <div class="list-group list-group-flush">
+                    {% for dispatch in active_dispatches %}
+                    <div class="list-group-item px-4 py-3">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div>
+                                <div class="fw-bold">{{ dispatch.shift.vehicle.plate }} <span class="fw-normal muted">· {{ dispatch.shift.route.code }}</span></div>
+                                <small class="muted">{{ dispatch.shift.driver.full_name }} · Vuelta {{ dispatch.sequence }}</small>
+                            </div>
+                            <span class="badge text-bg-primary align-self-start">En ruta</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state"><i class="bi bi-signpost fs-3 d-block mb-2"></i>No hay unidades en ruta en este momento.</div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}
